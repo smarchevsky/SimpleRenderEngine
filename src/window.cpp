@@ -13,12 +13,14 @@ Window::Window(int width /*= 800*/, int height /*= 600*/)
     , m_height(height)
 {
     if (SDL_Init(SDL_INIT_VIDEO) != 0) {
-        std::cerr << "SDL2 video subsystem couldn't be initialized. Error: " << SDL_GetError() << std::endl;
+        // std::cerr << "SDL2 video subsystem couldn't be initialized. Error: " << SDL_GetError() << std::endl;
         exit(1);
     }
 
     m_window = SDL_CreateWindow("Glad Sample", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
         m_width, m_height, SDL_WINDOW_SHOWN | SDL_WINDOW_OPENGL);
+
+    gl_context = SDL_GL_CreateContext(m_window);
 
     m_renderer = SDL_CreateRenderer(m_window, -1,
         SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC); // VSYNC HERE!
@@ -28,19 +30,11 @@ Window::Window(int width /*= 800*/, int height /*= 600*/)
         exit(1);
     }
 
-    gl_context = SDL_GL_CreateContext(m_window);
-
-    //    if (!gladLoadGLLoader((GLADloadproc)SDL_GL_GetProcAddress)) {
-    //        std::cerr << "Failed to initialize the OpenGL context." << std::endl;
-    //        exit(1);
-    //    }
-
-    //    std::cout << "OpenGL version loaded: " << GLVersion.major << "."
-    //              << GLVersion.minor << std::endl;
+    SDL_GL_MakeCurrent(m_window, gl_context);
 
     NOW = LAST = SDL_GetPerformanceCounter();
-    LAST = 0;
-    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+
+    // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     glClearColor(0.08, 0.08, 0.1, 1);
 }
 
@@ -50,15 +44,13 @@ bool Window::update()
     m_deltaTime = (float)((NOW - LAST) / (double)SDL_GetPerformanceFrequency());
 
     SDL_SetWindowTitle(m_window, std::to_string(1 / m_deltaTime).c_str());
-    SDL_GL_SwapWindow(m_window);
-    glClear(GL_COLOR_BUFFER_BIT);
 
     SDL_Event event;
     SDL_PollEvent(&event);
 
-    if (SDL_GetMouseState(NULL, NULL) & SDL_BUTTON(SDL_BUTTON_RIGHT)) {
-        SDL_Log("Mouse Button 1 (left) is pressed.");
-    }
+    // if (SDL_GetMouseState(NULL, NULL) & SDL_BUTTON(SDL_BUTTON_RIGHT))
+    //     SDL_Log("Mouse Button pressed.");
+
     if (event.type == SDL_KEYDOWN || event.type == SDL_KEYUP) {
         const auto& it = getKeyMap().find((SDL_KeyCode)event.key.keysym.sym,
             (SDL_Keymod)event.key.keysym.mod, event.type == SDL_KEYDOWN);
@@ -75,6 +67,9 @@ bool Window::update()
     }
 
     LAST = NOW;
+
+    SDL_GL_SwapWindow(m_window);
+    glClear(GL_COLOR_BUFFER_BIT);
     return m_isRendering;
 }
 

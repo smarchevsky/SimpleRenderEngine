@@ -12,4 +12,4 @@ aux_source_directory(src/ SRC_LIST)
 add_executable(${PROJECT_NAME} ${SRC_LIST} "main.cpp")
 
 
-target_link_libraries(${PROJECT_NAME} GL SDL2 GLEW)
+target_link_libraries(${PROJECT_NAME} GL SDL2)
