@@ -11,7 +11,8 @@ public:
 
 private:
     static uint32_t s_currentlyBindedVAO;
-    uint32_t m_VBO {}, m_EBO {}, m_VAO {};
+    uint32_t m_VBO {}, m_EBO {}, m_VAO {}, m_meshSize {};
+
 };
 
 #endif // MESH_H

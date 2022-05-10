@@ -19,7 +19,7 @@ Mesh::Mesh(const std::vector<float>& vertexArray, const std::vector<uint32_t>& i
 
 Mesh::Mesh(std::vector<float> vertexArray, std::vector<uint16_t> indexArray)
 {
-
+    m_meshSize = indexArray.size();
     glGenVertexArrays(1, &m_VAO);
     glGenBuffers(1, &m_VBO);
     glGenBuffers(1, &m_EBO);
@@ -45,7 +45,7 @@ void Mesh::draw()
     if (m_VAO != s_currentlyBindedVAO)
         glBindVertexArray(m_VAO);
     // glDrawArrays(GL_TRIANGLES, 0, 6);
-    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, 0);
+    glDrawElements(GL_TRIANGLES, m_meshSize, GL_UNSIGNED_SHORT, 0);
 }
 
 static_assert(std::is_same<uint32_t, GLuint>(), "");
