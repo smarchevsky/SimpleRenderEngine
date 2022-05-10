@@ -8,6 +8,27 @@
 #include <iostream>
 #include <string>
 
+static int SDLCALL my_event_filter(void* userdata, SDL_Event* event)
+{
+    Window* p_window = (Window*)userdata;
+
+    switch (event->type) {
+    case SDL_QUIT: // press exit btn
+        p_window->closeWindow();
+        return 1;
+    }
+    if (event->type == SDL_KEYDOWN || event->type == SDL_KEYUP) {
+        const auto& it = p_window->getKeyMap().find((SDL_KeyCode)event->key.keysym.sym,
+            (SDL_Keymod)event->key.keysym.mod, event->type == SDL_KEYDOWN);
+
+        if (it != p_window->getKeyMap().getKeyActions().end()) {
+            it->second();
+            return 1;
+        }
+    }
+    return 0;
+}
+
 Window::Window(int width /*= 800*/, int height /*= 600*/)
     : m_width(width)
     , m_height(height)
@@ -31,6 +52,7 @@ Window::Window(int width /*= 800*/, int height /*= 600*/)
     }
 
     SDL_GL_MakeCurrent(m_window, gl_context);
+    SDL_SetEventFilter(my_event_filter, this);
 
     NOW = LAST = SDL_GetPerformanceCounter();
 
@@ -46,25 +68,13 @@ bool Window::update()
     SDL_SetWindowTitle(m_window, std::to_string(1 / m_deltaTime).c_str());
 
     SDL_Event event;
-    SDL_PollEvent(&event);
+
+    while (SDL_PollEvent(&event)) { // poll until all events are handled!
+        // decide what to do with this event.
+    }
 
     // if (SDL_GetMouseState(NULL, NULL) & SDL_BUTTON(SDL_BUTTON_RIGHT))
     //     SDL_Log("Mouse Button pressed.");
-
-    if (event.type == SDL_KEYDOWN || event.type == SDL_KEYUP) {
-        const auto& it = getKeyMap().find((SDL_KeyCode)event.key.keysym.sym,
-            (SDL_Keymod)event.key.keysym.mod, event.type == SDL_KEYDOWN);
-
-        if (it != getKeyMap().getKeyActions().end()) {
-            it->second();
-        }
-    }
-
-    switch (event.type) {
-    case SDL_QUIT: // press exit btn
-        m_isRendering = false;
-        break;
-    }
 
     LAST = NOW;
 
