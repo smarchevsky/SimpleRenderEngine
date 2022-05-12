@@ -5,11 +5,12 @@
 #include <iostream>
 
 static const char* vertexShaderSource = "#version 330 core\n"
-                                        "layout (location = 0) in vec3 aPos;\n"
+                                        "layout (location = 0) in vec3 pos;\n"
+                                        "layout (location = 1) in vec3 normal;\n"
                                         "uniform vec2 offset;\n"
                                         "void main()\n"
                                         "{\n"
-                                        "   gl_Position = vec4(aPos.x + offset.x, aPos.y + offset.y, aPos.z, 1.0);\n"
+                                        "   gl_Position = vec4(pos.x + offset.x, pos.y + offset.y, pos.z, 1.0);\n"
                                         "}\0";
 
 static const char* fragmentShaderSource = "#version 330 core\n"

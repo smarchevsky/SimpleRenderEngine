@@ -1,4 +1,5 @@
 #include "mesh.h"
+#include "meshdata.h"
 #include "shader.h"
 #include "window.h"
 
@@ -18,18 +19,16 @@ int main()
 {
     Window window(1000, 1000);
 
-    window.getKeyMap().bindAction(SDLK_q, KMOD_LCTRL, true, [&]() {
+    window.getKeyMap().bindAction(SDLK_ESCAPE, KMOD_NONE, true, [&]() {
         window.closeWindow();
     });
 
-    const float x = 0.2f, y = x, z = 0;
-    std::vector<float> vertices = { // xyz0, xyz1, xyz2, xyz3
-        x, y, z, x, -y, z, -x, -y, z, -x, y, z
-    };
-    std::vector<unsigned short> indices = {
-        /*first: */ 0, 1, 3, /*second: */ 1, 2, 3
-    };
-    Mesh mesh(vertices, indices);
+    MeshData mData(MeshData::ParametricType::PlaneZ);
+    VertexAttribData attrib(
+        { { VertexAttribute::Type::Vertex, VertexAttribute::Format::f3 },
+            { VertexAttribute::Type::Normal, VertexAttribute::Format::f3 } });
+
+    GL_Mesh mesh(mData, attrib, IndexAttribData::Format::u32);
 
     Shader shader;
     auto shaderOffset = shader.getVariable("offset");
