@@ -116,6 +116,10 @@ Window::Window(int width /*= 800*/, int height /*= 600*/)
         std::cerr << "SDL2 Renderer couldn't be created. Error: " << SDL_GetError() << std::endl;
         exit(1);
     }
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
+
     initGamepad();
     SDL_GL_MakeCurrent(m_window, gl_context);
     SDL_SetEventFilter(my_event_filter, this);

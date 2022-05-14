@@ -1,12 +1,15 @@
+#include "camera.h"
 #include "mesh.h"
 #include "meshdata.h"
 #include "shader.h"
 #include "window.h"
 
 #include <iostream>
-#define LOG(x) std::cout << x << std::endl
 
+#define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtc/random.hpp>
+#include <glm/gtx/rotate_vector.hpp>
+
 #include <math.h>
 
 glm::vec3 rainbow(float x)
@@ -31,18 +34,25 @@ int main()
     GL_Mesh mesh(mData, attrib, IndexAttribData::Format::u32);
 
     Shader shader;
-    auto shaderOffset = shader.getVariable("offset");
-    auto shaderColor = shader.getVariable("color");
+    auto shaderModel = shader.getVariable("model");
+    auto shaderView = shader.getVariable("view");
+    auto shaderProjection = shader.getVariable("projection");
+
+    Camera camera;
+    glm::mat4 modelMatrix(1); // unit matrix
 
     float currentTime {};
     while (window.update()) {
 
         currentTime += window.getDeltaTime();
 
+        auto rotatedVector = glm::rotateZ(glm::vec3(0.f, 5.f, 2.f), currentTime);
+        camera.setPos(rotatedVector);
+
         shader.bind();
-        // apply variables after shader bind, but before draw
-        shaderOffset.set(glm::vec2(sin(currentTime), cos(currentTime)) * .6f);
-        shaderColor.set(rainbow(currentTime));
+        shaderModel.set(modelMatrix);
+        shaderView.set(camera.getView());
+        shaderProjection.set(camera.getProjection());
 
         mesh.draw();
     }

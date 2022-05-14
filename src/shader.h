@@ -6,11 +6,10 @@ class Shader {
 public:
     struct ShaderVariable {
         ShaderVariable(const Shader& parent, const char* name);
-        template <class T>
-        void set(const T& var) { }
-        void set(glm::vec2 var);
-        void set(glm::vec3 var);
-        void set(glm::vec4 var);
+        void set(const glm::vec2& var);
+        void set(const glm::vec3& var);
+        void set(const glm::vec4& var);
+        void set(const glm::mat4& var);
         void set(float var);
 
     private:

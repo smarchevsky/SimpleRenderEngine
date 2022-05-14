@@ -3,23 +3,70 @@
 #define GL_GLEXT_PROTOTYPES
 #include <SDL2/SDL_opengl.h>
 #include <iostream>
+#include <string>
 
-static const char* vertexShaderSource = "#version 330 core\n"
-                                        "layout (location = 0) in vec3 pos;\n"
-                                        "layout (location = 1) in vec3 normal;\n"
-                                        "uniform vec2 offset;\n"
-                                        "void main()\n"
-                                        "{\n"
-                                        "   gl_Position = vec4(pos.x + offset.x, pos.y + offset.y, pos.z, 1.0);\n"
-                                        "}\0";
+static const char* vertexShaderSource
+    = "#version 330 core\n"
 
-static const char* fragmentShaderSource = "#version 330 core\n"
-                                          "out vec4 FragColor;\n"
-                                          "uniform vec3 color = vec3(1.0f, 0.5f, 0.2f);\n"
-                                          "void main()\n"
-                                          "{\n"
-                                          "   FragColor = vec4(color.x, color.y, color.z, 1.0f);\n"
-                                          "}\n\0";
+      "layout (location = 0) in vec3 vertexPosition;   \n"
+      "layout (location = 1) in vec3 vertexNormal;   \n"
+
+      "uniform mat4 model;   \n"
+      "uniform mat4 view;   \n"
+      "uniform mat4 projection;   \n"
+
+      "out VS_OUT {"
+      "    vec4 wp;   \n" // world position
+      "    vec4 lp;   \n" // local position
+      "    vec3 n;   \n" // normal
+      "} vs;   \n"
+
+      "void main()"
+      "{\n"
+      "    vs.lp = vec4(vertexPosition, 1.0f);   \n"
+      "    vs.wp = model * vs.lp;   \n"
+      "    vec4 cp = view * vs.wp;   \n"
+      "    gl_Position  =  projection * cp;   \n"
+      "    vs.n = mat3(model) * vertexNormal;   \n"
+      "}\0";
+
+static const char* fragmentShaderSource
+    = "#version 330 core\n"
+
+      "uniform mat4 model;   \n"
+      "uniform mat4 view;   \n"
+      "uniform mat4 projection;   \n"
+      "uniform vec3 viewPos;   \n"
+      "uniform vec3 lightDir = vec3(0, 0, 1);   \n"
+
+      "uniform vec3 diffuseColor;   \n"
+
+      "in VS_OUT {"
+      "    vec4 wp;   \n" // world position
+      "    vec4 lp;   \n" // local position
+      "    vec3 n;    \n" // normal
+      "} vs;   \n"
+
+      "layout(location = 0) out vec3 color;   \n"
+
+      "float fresnelSchlick(float cosTheta, float f)"
+      "{"
+      "    return f + (1.0 - f) * pow(1.0 - cosTheta, 5.0);   \n"
+      "}"
+
+      "void main(){"
+      "    vec3 nn = normalize(vs.n);   \n"
+      "    vec3 viewDir = normalize(viewPos - vs.wp.xyz);   \n"
+
+      "    vec3 lDir = lightDir.rgb;   \n"
+
+      "    float lightDot = clamp(dot(lDir, nn), 0, 1);   \n"
+      "    float viewDot = abs(dot(viewDir, nn));   \n"
+      "    float spec = -dot(reflect(viewDir, nn), lDir);   \n"
+      "    color = vec3(lightDot);   \n"
+      "    color = color / (color + vec3(1.0));   \n"
+      "    color = vec3(1) - pow(vec3(1) - color, vec3(4));   \n"
+      "}\n";
 
 Shader::ShaderVariable::ShaderVariable(const Shader& parent, const char* name)
     : parentShader(parent)
@@ -28,9 +75,10 @@ Shader::ShaderVariable::ShaderVariable(const Shader& parent, const char* name)
 }
 
 void Shader::ShaderVariable::set(float var) { glUniform1f(location, var); }
-void Shader::ShaderVariable::set(glm::vec2 var) { glUniform2fv(location, 1, &var[0]); }
-void Shader::ShaderVariable::set(glm::vec3 var) { glUniform3fv(location, 1, &var[0]); }
-void Shader::ShaderVariable::set(glm::vec4 var) { glUniform4fv(location, 1, &var[0]); }
+void Shader::ShaderVariable::set(const glm::vec2& var) { glUniform2fv(location, 1, &var[0]); }
+void Shader::ShaderVariable::set(const glm::vec3& var) { glUniform3fv(location, 1, &var[0]); }
+void Shader::ShaderVariable::set(const glm::vec4& var) { glUniform4fv(location, 1, &var[0]); }
+void Shader::ShaderVariable::set(const glm::mat4& var) { glUniformMatrix4fv(location, 1, GL_FALSE, &var[0][0]); }
 
 Shader::Shader()
 {
