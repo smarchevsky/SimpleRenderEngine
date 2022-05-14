@@ -104,15 +104,15 @@ static ByteArray makePlainVertexByteArray(const MeshData& meshData,
         currentAttribOffset += currentAttrib.parameters.sizeInBytes;
     }
 
-    float* floatArray = (float*)byteArray.data();
-    int floatArrSize = byteArray.size() / 4;
+    //    float* floatArray = (float*)byteArray.data();
+    //    int floatArrSize = byteArray.size() / 4;
 
-    LOG("floatArrSize: " << floatArrSize);
-    std::string line;
-    for (int i = 0; i < floatArrSize; ++i) {
-        line += std::to_string(floatArray[i]) + " ";
-    }
-    LOG(line);
+    //    LOG("floatArrSize: " << floatArrSize);
+    //    std::string line;
+    //    for (int i = 0; i < floatArrSize; ++i) {
+    //        line += std::to_string(floatArray[i]) + " ";
+    //    }
+    //    LOG(line);
     return byteArray;
 }
 
@@ -136,14 +136,14 @@ static ByteArray makePlainIndexByteArray(const MeshData& meshData, IndexAttribDa
         break;
     }
 
-    auto* arr = (uint32_t*)byteArray.data();
-    int arrSize = byteArray.size() / 4;
+    //    auto* arr = (uint32_t*)byteArray.data();
+    //    int arrSize = byteArray.size() / 4;
 
-    LOG("indexArrSize: " << arrSize);
-    std::string line;
-    for (int i = 0; i < arrSize; ++i) {
-        line += std::to_string(arr[i]) + " ";
-    }
+    //    LOG("indexArrSize: " << arrSize);
+    //    std::string line;
+    //    for (int i = 0; i < arrSize; ++i) {
+    //        line += std::to_string(arr[i]) + " ";
+    //    }
 
     return byteArray;
 }
@@ -165,7 +165,7 @@ GL_Mesh::GL_Mesh(const MeshData& meshData, VertexAttribData vertAttribData, Inde
     glGenBuffers(1, &m_VBO);
     glGenBuffers(1, &m_EBO);
     glBindVertexArray(m_VAO);
-    LOG("m_VBO: " << m_VBO << ", m_EBO: " << m_EBO << ", m_VAO: " << m_VAO);
+
     const ByteArray vertexByteArray = makePlainVertexByteArray(meshData, vertAttribData);
     const ByteArray indexByteArray = makePlainIndexByteArray(meshData, indexAttribData);
 
