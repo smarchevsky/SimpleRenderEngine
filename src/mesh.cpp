@@ -86,14 +86,12 @@ static void createVertexPointerAttrbutes(const VertexAttribData& attributes)
     }
 }
 
-static ByteArray makePlainVertexByteArray(const MeshData& meshData,
-    VertexAttribData& attribData)
+static ByteArray makePlainVertexByteArray(
+    const glm::vec3* vertices, const glm::vec3* normals, size_t vertArraySize, VertexAttribData& attribData)
 {
-    size_t vertArrSize = meshData.getVertices().size();
-    assert(vertArrSize == meshData.getNormals().size());
 
     const uint32_t attribStrideSize = attribData.strideSize;
-    ByteArray byteArray(vertArrSize * attribStrideSize, 0);
+    ByteArray byteArray(vertArraySize * attribStrideSize, 0);
 
     uint32_t currentAttribOffset = 0;
     for (uint32_t i_attr = 0; i_attr < attribData.attributes.size(); ++i_attr) {
@@ -105,10 +103,10 @@ static ByteArray makePlainVertexByteArray(const MeshData& meshData,
         const glm::vec3* p_currentVector {};
         switch (currentAttrib.vertAttribType) {
         case VertexAttribute::Type::Vertex:
-            p_currentVector = meshData.getVertices().data();
+            p_currentVector = vertices;
             break;
         case VertexAttribute::Type::Normal:
-            p_currentVector = meshData.getNormals().data();
+            p_currentVector = normals;
             break;
         default:
             assert(false); // unsupported
@@ -118,7 +116,7 @@ static ByteArray makePlainVertexByteArray(const MeshData& meshData,
         switch (currentAttrib.vertAttribFormat) {
         case VertexAttribute::Format::f3: {
             assert(sizeof(glm::vec3) == currentAttrib.parameters.sizeInBytes);
-            for (uint32_t i_vert = 0; i_vert < vertArrSize; ++i_vert) {
+            for (uint32_t i_vert = 0; i_vert < vertArraySize; ++i_vert) {
                 *(glm::vec3*)currentByteArrayPos = p_currentVector[i_vert];
                 currentByteArrayPos += attribStrideSize;
             }
@@ -126,7 +124,7 @@ static ByteArray makePlainVertexByteArray(const MeshData& meshData,
             //        case VertexAttribute::Format::h3:
             //            break;
         case VertexAttribute::Format::h4: {
-            for (uint32_t i_vert = 0; i_vert < vertArrSize; ++i_vert) {
+            for (uint32_t i_vert = 0; i_vert < vertArraySize; ++i_vert) {
                 auto packedVec4 = packHalf4x16(glm::vec4(p_currentVector[i_vert], 0.f));
                 *(uint64_t*)currentByteArrayPos = packedVec4;
                 currentByteArrayPos += attribStrideSize;
@@ -151,38 +149,35 @@ static ByteArray makePlainVertexByteArray(const MeshData& meshData,
     return byteArray;
 }
 
-static ByteArray makePlainIndexByteArray(const MeshData& meshData, IndexAttribData indexAttribute)
+static ByteArray makePlainIndexByteArray(const VertIndex* vertIndices, size_t indArraySize, IndexAttribData indexAttribute)
 {
     ByteArray byteArray;
-    size_t indArraySize = meshData.getIndices().size();
-    size_t vertArraySize = meshData.getVertices().size();
 
     switch (indexAttribute.format) {
 
     case IndexAttribData::Format::u8: {
         byteArray.resize(indArraySize * sizeof(uint8_t));
-        assert(vertArraySize < 256); // too many vertices for u8 format;
         uint8_t* byteArrayAsUint8 = (uint8_t*)byteArray.data();
         for (int i = 0; i < indArraySize; ++i) {
-            byteArrayAsUint8[i] = (uint8_t)meshData.getIndices()[i];
+            byteArrayAsUint8[i] = (uint8_t)vertIndices[i];
         }
     } break;
 
     case IndexAttribData::Format::u16: {
         byteArray.resize(indArraySize * sizeof(uint16_t));
-        assert(vertArraySize < 65536); // too many vertices for u16 format;
         uint16_t* byteArrayAsUint16 = (uint16_t*)byteArray.data();
         for (int i = 0; i < indArraySize; ++i) {
-            byteArrayAsUint16[i] = (uint16_t)meshData.getIndices()[i];
+            byteArrayAsUint16[i] = (uint16_t)vertIndices[i];
         }
     } break;
 
     case IndexAttribData::Format::u32:
         byteArray.resize(indArraySize * sizeof(uint32_t));
-        assert(sizeof(*meshData.getIndices().data()) == sizeof(uint32_t)); // meshdata indices must be 32bit index
+        assert(sizeof(*vertIndices) == sizeof(uint32_t)); // meshdata indices must be 32bit index
+
         uint32_t* byteArrayAsUint32 = (uint32_t*)byteArray.data();
         for (int i = 0; i < indArraySize; ++i) {
-            byteArrayAsUint32[i] = meshData.getIndices()[i];
+            byteArrayAsUint32[i] = vertIndices[i];
         }
         break;
     }
@@ -216,14 +211,23 @@ static int getGLIndexFormatType(IndexAttribData indexAttribute)
 GL_Mesh::GL_Mesh(const MeshData& meshData, VertexAttribData vertAttribData, IndexAttribData indexAttribData)
     : m_GL_IndexFormatType(getGLIndexFormatType(indexAttribData))
 {
-    m_meshElementArraySize = meshData.getIndices().size();
+    m_meshElementArraySize = meshData.getNumIndices();
     glGenVertexArrays(1, &m_VAO);
     glGenBuffers(1, &m_VBO);
     glGenBuffers(1, &m_EBO);
     glBindVertexArray(m_VAO);
 
-    const ByteArray vertexByteArray = makePlainVertexByteArray(meshData, vertAttribData);
-    const ByteArray indexByteArray = makePlainIndexByteArray(meshData, indexAttribData);
+    auto numVertices = meshData.getNumVertices();
+    const ByteArray vertexByteArray = makePlainVertexByteArray(
+        meshData.getVerticesPtr(), meshData.getNormalsPtr(), numVertices, vertAttribData);
+
+    if ((indexAttribData.format == IndexAttribData::Format::u8 && numVertices > 255)
+        || (indexAttribData.format == IndexAttribData::Format::u16 && numVertices > 65535)) {
+        assert(false); // too many vertices for byte format
+    }
+
+    const ByteArray indexByteArray = makePlainIndexByteArray(
+        meshData.getIndicesPtr(), meshData.getNumIndices(), indexAttribData);
 
     glBindBuffer(GL_ARRAY_BUFFER, m_VBO);
     glBufferData(GL_ARRAY_BUFFER, vertexByteArray.size(), vertexByteArray.data(), GL_STATIC_DRAW);
@@ -245,6 +249,6 @@ void GL_Mesh::draw()
     glDrawElements(GL_TRIANGLES, m_meshElementArraySize, m_GL_IndexFormatType, 0);
 }
 
-static_assert(std::is_same<uint32_t, VertexIndexUintFormat>(), "");
+static_assert(std::is_same<uint32_t, VertIndex>(), "");
 static_assert(std::is_same<uint32_t, GLuint>(), "");
 static_assert(std::is_same<uint16_t, GLushort>(), "");

@@ -26,12 +26,12 @@ int main()
         window.closeWindow();
     });
 
-    MeshData mData(MeshData::ParametricType::PlaneZ);
+    MeshData mData(MeshData::ParametricType::CylindricalNormalCube);
     VertexAttribData attrib(
         { { VertexAttribute::Type::Vertex, VertexAttribute::Format::f3 },
-            { VertexAttribute::Type::Normal, VertexAttribute::Format::h4 } });
+            { VertexAttribute::Type::Normal, VertexAttribute::Format::f3 } });
 
-    GL_Mesh mesh(mData, attrib, IndexAttribData::Format::u32);
+    GL_Mesh mesh(mData, attrib, IndexAttribData::Format::u8);
 
     Shader shader;
     auto shaderModel = shader.getVariable("model");
