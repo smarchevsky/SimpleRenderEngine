@@ -3,25 +3,34 @@
 
 #define GL_GLEXT_PROTOTYPES
 #include <SDL2/SDL_opengl.h>
-//#include <SDL2/SDL_opengl_glext.h>
-#include <cassert>
-#include <glm/glm.hpp>
-#include <iostream>
-#define LOG(x) std::cout << __FUNCTION__ << ", " << x << std::endl
+#include <SDL2/SDL_opengl_glext.h>
 
-#include <cstring>
+#include <glm/glm.hpp>
+#include <glm/gtc/packing.hpp>
+#include <iostream>
+
+#include <cassert>
+#define LOG(x) std::cout << __FUNCTION__ << ", " << x << std::endl
+#define RANGE(x) x.begin(), x.end()
 
 uint32_t GL_Mesh::s_currentlyBindedVAO {};
-
-#define RANGE(x) x.begin(), x.end()
 typedef std::vector<uint8_t> ByteArray;
 
 static VertexAttribute::Parameters calcParameters(VertexAttribute::Format format)
 {
     VertexAttribute::Parameters params;
-    int typeSize = (format >= VertexAttribute::Format::f1 || format <= VertexAttribute::Format::f4) ? sizeof(float)
-        : (format >= VertexAttribute::Format::h1 || format <= VertexAttribute::Format::h4)          ? 2
-                                                                                                    : 1;
+    bool isFloat = (format >= VertexAttribute::Format::f1 && format <= VertexAttribute::Format::f4);
+    bool isHalf = (format >= VertexAttribute::Format::h1 && format <= VertexAttribute::Format::h4);
+    int typeSize;
+    if (isFloat) {
+        typeSize = sizeof(float);
+        params.openGLTypeFormat = GL_FLOAT;
+    } else if (isHalf) {
+        typeSize = 2;
+        params.openGLTypeFormat = GL_HALF_FLOAT;
+    } else
+        assert(false); // unsupported
+
     params.vectorSize = ((int)format & 0b11) + 1;
     params.sizeInBytes = typeSize * params.vectorSize;
     assert(format <= VertexAttribute::Format::h4);
@@ -63,13 +72,16 @@ static void createVertexPointerAttrbutes(const VertexAttribData& attributes)
 {
     size_t offset = 0;
     for (int i = 0; i < attributes.attributes.size(); ++i) {
-        const auto& attrib = attributes.attributes[i];
-        if (attrib.parameters.sizeInBytes) {
-            glVertexAttribPointer(i, attrib.parameters.vectorSize, GL_FLOAT,
-                attrib.parameters.normalized ? GL_TRUE : GL_FALSE, attributes.strideSize, (GLvoid*)offset);
+        const auto& currentAttrib = attributes.attributes[i];
+        if (currentAttrib.parameters.sizeInBytes) {
+            glVertexAttribPointer(i, currentAttrib.parameters.vectorSize,
+                currentAttrib.parameters.openGLTypeFormat,
+                currentAttrib.parameters.normalized ? GL_TRUE : GL_FALSE,
+                attributes.strideSize,
+                (GLvoid*)offset);
             glEnableVertexAttribArray(i);
 
-            offset += attrib.parameters.sizeInBytes;
+            offset += currentAttrib.parameters.sizeInBytes;
         }
     }
 }
@@ -87,18 +99,41 @@ static ByteArray makePlainVertexByteArray(const MeshData& meshData,
     for (uint32_t i_attr = 0; i_attr < attribData.attributes.size(); ++i_attr) {
 
         const auto& currentAttrib = attribData.attributes[i_attr];
-        assert(sizeof(glm::vec3) == currentAttrib.parameters.sizeInBytes); // only float vec3 supported
 
         assert(currentAttrib.vertAttribType <= VertexAttribute::Type::Normal); // only vertices and normals supported
-        const std::vector<glm::vec3>& currentVector
-            = (currentAttrib.vertAttribType == VertexAttribute::Type::Vertex) ? meshData.getVertices()
-                                                                              : meshData.getNormals();
 
-        uint8_t* currentByteArrayPosition = byteArray.data() + currentAttribOffset;
-        for (uint32_t i_vert = 0; i_vert < vertArrSize; ++i_vert) {
-            const glm::vec3& currentVertex = currentVector[i_vert];
-            memcpy(currentByteArrayPosition, &currentVertex, sizeof(glm::vec3));
-            currentByteArrayPosition += attribStrideSize;
+        const glm::vec3* p_currentVector {};
+        switch (currentAttrib.vertAttribType) {
+        case VertexAttribute::Type::Vertex:
+            p_currentVector = meshData.getVertices().data();
+            break;
+        case VertexAttribute::Type::Normal:
+            p_currentVector = meshData.getNormals().data();
+            break;
+        default:
+            assert(false); // unsupported
+        }
+
+        uint8_t* currentByteArrayPos = byteArray.data() + currentAttribOffset;
+        switch (currentAttrib.vertAttribFormat) {
+        case VertexAttribute::Format::f3: {
+            assert(sizeof(glm::vec3) == currentAttrib.parameters.sizeInBytes);
+            for (uint32_t i_vert = 0; i_vert < vertArrSize; ++i_vert) {
+                *(glm::vec3*)currentByteArrayPos = p_currentVector[i_vert];
+                currentByteArrayPos += attribStrideSize;
+            }
+        } break;
+            //        case VertexAttribute::Format::h3:
+            //            break;
+        case VertexAttribute::Format::h4: {
+            for (uint32_t i_vert = 0; i_vert < vertArrSize; ++i_vert) {
+                auto packedVec4 = packHalf4x16(glm::vec4(p_currentVector[i_vert], 0.f));
+                *(uint64_t*)currentByteArrayPos = packedVec4;
+                currentByteArrayPos += attribStrideSize;
+            }
+        } break;
+        default:
+            assert(false); // unsupported
         }
 
         currentAttribOffset += currentAttrib.parameters.sizeInBytes;

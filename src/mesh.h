@@ -16,7 +16,7 @@ struct VertexAttribute {
     };
 
     enum class Type : uint8_t { Vertex, Normal, Tan, BiTan, Color };
-    struct Parameters { uint16_t sizeInBytes; uint8_t vectorSize; bool normalized {}; };
+    struct Parameters { int openGLTypeFormat; uint16_t sizeInBytes; uint8_t vectorSize; bool normalized {}; };
     // clang-format on
     VertexAttribute(Type type, Format format);
 

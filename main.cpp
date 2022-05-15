@@ -29,7 +29,7 @@ int main()
     MeshData mData(MeshData::ParametricType::PlaneZ);
     VertexAttribData attrib(
         { { VertexAttribute::Type::Vertex, VertexAttribute::Format::f3 },
-            { VertexAttribute::Type::Normal, VertexAttribute::Format::f3 } });
+            { VertexAttribute::Type::Normal, VertexAttribute::Format::h4 } });
 
     GL_Mesh mesh(mData, attrib, IndexAttribData::Format::u32);
 
