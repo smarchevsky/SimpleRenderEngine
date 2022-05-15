@@ -119,20 +119,43 @@ static ByteArray makePlainVertexByteArray(const MeshData& meshData,
 static ByteArray makePlainIndexByteArray(const MeshData& meshData, IndexAttribData indexAttribute)
 {
     ByteArray byteArray;
+    size_t indArraySize = meshData.getIndices().size();
+    size_t vertArraySize = meshData.getVertices().size();
+
     switch (indexAttribute.format) {
-    case IndexAttribData::Format::u8:
-        assert(false); // not supported
-        break;
-    case IndexAttribData::Format::u16:
-        assert(false); // not supported
-        break;
-    case IndexAttribData::Format::u24:
-        assert(false); // not supported
-        break;
+
+    case IndexAttribData::Format::u8: {
+        byteArray.resize(indArraySize * sizeof(uint8_t));
+        assert(vertArraySize < 256); // too many vertices for u8 format;
+        uint8_t* byteArrayAsUint8 = (uint8_t*)byteArray.data();
+        for (int i = 0; i < indArraySize; ++i) {
+            byteArrayAsUint8[i] = (uint8_t)meshData.getIndices()[i];
+        }
+    } break;
+
+    case IndexAttribData::Format::u16: {
+        byteArray.resize(indArraySize * sizeof(uint16_t));
+        assert(vertArraySize < 65536); // too many vertices for u16 format;
+        uint16_t* byteArrayAsUint16 = (uint16_t*)byteArray.data();
+        for (int i = 0; i < indArraySize; ++i) {
+            byteArrayAsUint16[i] = (uint16_t)meshData.getIndices()[i];
+        }
+    } break;
+
+    case IndexAttribData::Format::u24: {
+        assert(false); // it seems, it does not work, check and delete it
+        //        byteArray.resize(indArraySize * 3);
+        //        assert(vertArraySize < (1 << 24)); // too many vertices for u16 format;
+        //        uint16_t* byteArrayAsUint16 = (uint16_t*)byteArray.data();
+        //        for (int i = 0; i < indArraySize; ++i) {
+        //            auto currentElement = meshData.getIndices()[i];
+        //            uint32_t* byteArrayElemntAs32Bit = (uint32_t*)(byteArray.data() + i * 3);
+        //            *byteArrayElemntAs32Bit = currentElement;
+        //        }
+    } break;
     case IndexAttribData::Format::u32:
-        size_t indArraySize = meshData.getIndices().size() * sizeof(uint32_t);
-        byteArray.resize(indArraySize);
-        memcpy(byteArray.data(), meshData.getIndices().data(), indArraySize);
+        byteArray.resize(indArraySize * sizeof(uint32_t));
+        memcpy(byteArray.data(), meshData.getIndices().data(), indArraySize * sizeof(uint32_t));
         break;
     }
 
@@ -149,12 +172,20 @@ static ByteArray makePlainIndexByteArray(const MeshData& meshData, IndexAttribDa
 }
 static int getGLIndexFormatType(IndexAttribData indexAttribute)
 {
-    assert(indexAttribute.format <= IndexAttribData::Format::u32);
-    return (indexAttribute.format == IndexAttribData::Format::u8)
-        ? GL_UNSIGNED_BYTE
-        : (indexAttribute.format == IndexAttribData::Format::u16) ? GL_UNSIGNED_SHORT
-        : (indexAttribute.format == IndexAttribData::Format::u24) ? GL_3_BYTES
-                                                                  : GL_UNSIGNED_INT;
+    switch (indexAttribute.format) {
+    case IndexAttribData::Format::u8:
+        return GL_UNSIGNED_BYTE;
+
+    case IndexAttribData::Format::u16:
+        return GL_UNSIGNED_SHORT;
+
+    case IndexAttribData::Format::u24: // udoli
+        return GL_3_BYTES;
+
+    case IndexAttribData::Format::u32:
+        return GL_UNSIGNED_INT;
+    }
+    assert(false); // undefined index format
 }
 
 GL_Mesh::GL_Mesh(const MeshData& meshData, VertexAttribData vertAttribData, IndexAttribData indexAttribData)
