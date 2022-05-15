@@ -39,6 +39,10 @@ private:
 
     uint64_t NOW {}, LAST {};
     float m_deltaTime {};
+
+    float m_secondFract {};
+    uint32_t m_framePerSecCounter {};
+
     bool m_isRendering = true;
 };
 #endif // WINDOW_H

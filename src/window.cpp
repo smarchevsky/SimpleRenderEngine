@@ -168,7 +168,14 @@ bool Window::update()
     NOW = SDL_GetPerformanceCounter();
     m_deltaTime = (float)((NOW - LAST) / (double)SDL_GetPerformanceFrequency());
 
-    SDL_SetWindowTitle(m_window, std::to_string(1 / m_deltaTime).c_str());
+    m_secondFract += m_deltaTime;
+    m_framePerSecCounter++;
+
+    if (m_secondFract > 1.f) {
+        SDL_SetWindowTitle(m_window, std::to_string(m_framePerSecCounter / m_secondFract).c_str());
+        m_framePerSecCounter = 0;
+        m_secondFract = fmodf(m_secondFract, 1.f);
+    }
 
     SDL_Event event;
     while (SDL_PollEvent(&event)) { // poll until all events are handled!
