@@ -3,70 +3,17 @@
 
 #define GL_GLEXT_PROTOTYPES
 #include <SDL2/SDL_opengl.h>
-#include <SDL2/SDL_opengl_glext.h>
 
 #include <glm/glm.hpp>
 #include <glm/gtc/packing.hpp>
 #include <iostream>
 
 #include <cassert>
+uint32_t GL_Mesh::s_currentlyBindedVAO {};
+
 #define LOG(x) std::cout << __FUNCTION__ << ", " << x << std::endl
 #define RANGE(x) x.begin(), x.end()
-
-uint32_t GL_Mesh::s_currentlyBindedVAO {};
 typedef std::vector<uint8_t> ByteArray;
-
-static VertexAttribute::Parameters calcParameters(VertexAttribute::Format format)
-{
-    VertexAttribute::Parameters params;
-    bool isFloat = (format >= VertexAttribute::Format::f1 && format <= VertexAttribute::Format::f4);
-    bool isHalf = (format >= VertexAttribute::Format::h1 && format <= VertexAttribute::Format::h4);
-    int typeSize;
-    if (isFloat) {
-        typeSize = sizeof(float);
-        params.openGLTypeFormat = GL_FLOAT;
-    } else if (isHalf) {
-        typeSize = 2;
-        params.openGLTypeFormat = GL_HALF_FLOAT;
-    } else
-        assert(false); // unsupported
-
-    params.vectorSize = ((int)format & 0b11) + 1;
-    params.sizeInBytes = typeSize * params.vectorSize;
-    assert(format <= VertexAttribute::Format::h4);
-    return params;
-}
-
-VertexAttribute::VertexAttribute(Type type, Format format)
-    : vertAttribType(type)
-    , vertAttribFormat(format)
-    , parameters(calcParameters(format))
-{
-}
-
-static uint32_t calcStrideSize(const std::vector<VertexAttribute>& attribs)
-{
-    uint32_t strideSize = 0;
-    for (const auto& a : attribs)
-        strideSize += a.parameters.sizeInBytes;
-    return strideSize;
-}
-
-VertexAttribData::VertexAttribData(const std::vector<VertexAttribute>& attribs)
-    : attributes(attribs)
-    , strideSize(calcStrideSize(attribs))
-{
-}
-
-static auto createVectorFromInitializerList(std::initializer_list<VertexAttribute> attribList)
-{
-    return std::vector<VertexAttribute>(attribList);
-}
-
-VertexAttribData::VertexAttribData(std::initializer_list<VertexAttribute> attribList)
-    : VertexAttribData(std::move(createVectorFromInitializerList(attribList)))
-{
-}
 
 static void createVertexPointerAttrbutes(const VertexAttribData& attributes)
 {
@@ -87,7 +34,7 @@ static void createVertexPointerAttrbutes(const VertexAttribData& attributes)
 }
 
 static ByteArray makePlainVertexByteArray(
-    const glm::vec3* vertices, const glm::vec3* normals, size_t vertArraySize, VertexAttribData& attribData)
+    const glm::vec3* positions, const glm::vec3* normals, size_t vertArraySize, VertexAttribData& attribData)
 {
 
     const uint32_t attribStrideSize = attribData.strideSize;
@@ -102,8 +49,8 @@ static ByteArray makePlainVertexByteArray(
 
         const glm::vec3* p_currentVector {};
         switch (currentAttrib.vertAttribType) {
-        case VertexAttribute::Type::Vertex:
-            p_currentVector = vertices;
+        case VertexAttribute::Type::Position:
+            p_currentVector = positions;
             break;
         case VertexAttribute::Type::Normal:
             p_currentVector = normals;
@@ -219,7 +166,7 @@ GL_Mesh::GL_Mesh(const MeshData& meshData, VertexAttribData vertAttribData, Inde
 
     auto numVertices = meshData.getNumVertices();
     const ByteArray vertexByteArray = makePlainVertexByteArray(
-        meshData.getVerticesPtr(), meshData.getNormalsPtr(), numVertices, vertAttribData);
+        meshData.getPositionsPtr(), meshData.getNormalsPtr(), numVertices, vertAttribData);
 
     if ((indexAttribData.format == IndexAttribData::Format::u8 && numVertices > 255)
         || (indexAttribData.format == IndexAttribData::Format::u16 && numVertices > 65535)) {

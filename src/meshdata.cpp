@@ -48,11 +48,11 @@ MeshData::MeshData(ParametricType type)
 {
     switch (type) {
     case MeshData::ParametricType::PlaneZ:
-        createPlaneZ(m_vertices, m_normals, m_indices);
+        createPlaneZ(m_positons, m_normals, m_indices);
 
         break;
     case MeshData::ParametricType::CylindricalNormalCube:
-        createCylindricalNormalCube(m_vertices, m_normals, m_indices);
+        createCylindricalNormalCube(m_positons, m_normals, m_indices);
         break;
     };
 }

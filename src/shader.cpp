@@ -10,6 +10,7 @@ static const char* vertexShaderSource
 
       "layout (location = 0) in vec3 vertexPosition;   \n"
       "layout (location = 1) in vec3 vertexNormal;   \n"
+      "layout (location = 3) in mat4 aInstanceMatrix;"
 
       "uniform mat4 model;   \n"
       "uniform mat4 view;   \n"

@@ -22,17 +22,17 @@ struct MeshData {
 
     uint32_t getNumVertices() const
     {
-        assert(m_vertices.size() == m_normals.size());
-        return m_vertices.size();
+        assert(m_positons.size() == m_normals.size());
+        return m_positons.size();
     }
-    const Vec3* getVerticesPtr() const { return m_vertices.data(); }
+    const Vec3* getPositionsPtr() const { return m_positons.data(); }
     const Vec3* getNormalsPtr() const { return m_normals.data(); }
 
     VertIndex getNumIndices() const { return m_indices.size(); }
     const VertIndex* getIndicesPtr() const { return m_indices.data(); }
 
 private:
-    VertArray m_vertices;
+    VertArray m_positons;
     VertArray m_normals;
     IndexArray m_indices;
 };
