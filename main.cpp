@@ -33,7 +33,8 @@ int main()
 
     GL_Mesh mesh(mData, attrib, IndexAttribData::Format::u16);
 
-    Shader shader;
+    Shader shader(attrib);
+
     auto shaderModel = shader.getVariable("model");
     auto shaderView = shader.getVariable("view");
     auto shaderProjection = shader.getVariable("projection");
@@ -43,7 +44,6 @@ int main()
 
     float currentTime {};
     while (window.update()) {
-
         currentTime += window.getDeltaTime();
 
         auto rotatedVector = glm::rotateZ(glm::vec3(0.f, 5.f, 2.f), currentTime);
