@@ -128,6 +128,7 @@ Window::Window(int width /*= 800*/, int height /*= 600*/)
 
     // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     glClearColor(0.08, 0.08, 0.1, 1);
+    glEnable(GL_DEPTH_TEST);
 }
 
 void Window::initGamepad()
@@ -180,7 +181,7 @@ bool Window::update()
     LAST = NOW;
 
     SDL_GL_SwapWindow(m_window);
-    glClear(GL_COLOR_BUFFER_BIT);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     return m_isRendering;
 }
 
