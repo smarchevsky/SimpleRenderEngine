@@ -35,7 +35,7 @@ struct VertexAttribData {
 struct IndexAttribData {
     // clang-format off
     enum class Format : uint8_t {
-        u8 = 1, u16, u24, u32 };
+        u8 = 1, u16, u32 };
     // clang-format on
     IndexAttribData(Format format)
         : format(format)

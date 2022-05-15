@@ -142,20 +142,13 @@ static ByteArray makePlainIndexByteArray(const MeshData& meshData, IndexAttribDa
         }
     } break;
 
-    case IndexAttribData::Format::u24: {
-        assert(false); // it seems, it does not work, check and delete it
-        //        byteArray.resize(indArraySize * 3);
-        //        assert(vertArraySize < (1 << 24)); // too many vertices for u16 format;
-        //        uint16_t* byteArrayAsUint16 = (uint16_t*)byteArray.data();
-        //        for (int i = 0; i < indArraySize; ++i) {
-        //            auto currentElement = meshData.getIndices()[i];
-        //            uint32_t* byteArrayElemntAs32Bit = (uint32_t*)(byteArray.data() + i * 3);
-        //            *byteArrayElemntAs32Bit = currentElement;
-        //        }
-    } break;
     case IndexAttribData::Format::u32:
         byteArray.resize(indArraySize * sizeof(uint32_t));
-        memcpy(byteArray.data(), meshData.getIndices().data(), indArraySize * sizeof(uint32_t));
+        assert(sizeof(*meshData.getIndices().data()) == sizeof(uint32_t)); // meshdata indices must be 32bit index
+        uint32_t* byteArrayAsUint32 = (uint32_t*)byteArray.data();
+        for (int i = 0; i < indArraySize; ++i) {
+            byteArrayAsUint32[i] = meshData.getIndices()[i];
+        }
         break;
     }
 
@@ -178,9 +171,6 @@ static int getGLIndexFormatType(IndexAttribData indexAttribute)
 
     case IndexAttribData::Format::u16:
         return GL_UNSIGNED_SHORT;
-
-    case IndexAttribData::Format::u24: // udoli
-        return GL_3_BYTES;
 
     case IndexAttribData::Format::u32:
         return GL_UNSIGNED_INT;
@@ -220,5 +210,6 @@ void GL_Mesh::draw()
     glDrawElements(GL_TRIANGLES, m_meshElementArraySize, m_GL_IndexFormatType, 0);
 }
 
+static_assert(std::is_same<uint32_t, VertexIndexUintFormat>(), "");
 static_assert(std::is_same<uint32_t, GLuint>(), "");
 static_assert(std::is_same<uint16_t, GLushort>(), "");
