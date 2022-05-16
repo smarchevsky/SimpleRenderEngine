@@ -26,12 +26,22 @@ int main()
         window.closeWindow();
     });
 
+    std::vector<glm::mat4> matrices;
+    for (int i = 0; i < 100.f; ++i) {
+        glm::mat4 mat(1);
+        mat = glm::translate(mat, glm::ballRand(10.f));
+        mat = glm::rotate(mat, glm::linearRand(0.f, (float)(2 * M_PI)), glm::sphericalRand(1.f));
+        mat = glm::scale(mat, { 0.05f, 0.05f, 5.0f });
+        matrices.push_back(mat);
+    }
+
     MeshData mData(MeshData::ParametricType::CylindricalNormalCube);
     VertexAttribData attrib(
         { { VertexAttribute::Type::Position, VertexAttribute::Format::f3 },
             { VertexAttribute::Type::Normal, VertexAttribute::Format::h4 } });
 
     GL_Mesh mesh(mData, attrib, IndexAttribData::Format::u16);
+    mesh.setInstanceData(matrices);
 
     Shader shader(attrib);
 
@@ -47,7 +57,7 @@ int main()
     while (window.update()) {
         currentTime += window.getDeltaTime();
 
-        auto rotatedVector = glm::rotateZ(glm::vec3(0.f, 5.f, 2.f), currentTime);
+        auto rotatedVector = glm::rotateZ(glm::vec3(0.f, 15.f, 6.f), currentTime);
         camera.setPos(rotatedVector);
 
         shader.bind();

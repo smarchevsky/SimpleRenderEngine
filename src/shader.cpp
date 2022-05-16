@@ -63,6 +63,7 @@ static std::string getVertexCode(const VertexAttribData& vertData)
 {
     return s_version
         + generateVertexAtrtributes(vertData)
+        + "layout (location = 3) in mat4 instanceMatrix;"
 
         + commonUniformBlock()
 
@@ -71,7 +72,7 @@ static std::string getVertexCode(const VertexAttribData& vertData)
         "void main()"
         "{\n"
         "    vs.lp = vec4(vertexPosition.xyz, 1.0f); \n"
-        "    vs.wp = model * vs.lp;                  \n"
+        "    vs.wp = model * instanceMatrix * vs.lp;                  \n"
         "    vec4 cp = view * vs.wp;                 \n"
         "    gl_Position  =  projection * cp;        \n"
         "    vs.n = mat3(model) * vertexNormal.xyz;  \n"
@@ -92,20 +93,15 @@ static std::string getFragmentCode()
 
         "layout(location = 0) out vec3 fragColor;   \n"
 
-        "float fresnelSchlick(float cosTheta, float f)"
-        "{"
-        "    return f + (1.0 - f) * pow(1.0 - cosTheta, 5.0);   \n"
-        "}"
-
         "void main(){"
         "    vec3 nn = normalize(vs.n);   \n"
         "    vec3 viewDir = normalize(viewPos - vs.wp.xyz);   \n"
         "    vec3 lDir = lightDir.rgb;   \n"
 
-        "    float lightDot = clamp(dot(lDir, nn), 0, 1);   \n"
-        "    float viewDot = clamp(dot(viewDir, nn), 0, 1);   \n"
-        "    float spec = dot(reflect(viewDir, nn), lDir);   \n"
-        "    fragColor = vec3(pow(spec, 4.));   \n"
+        "    float lightDot = clamp(dot(lDir, nn),                0, 1);   \n"
+        "    float viewDot = clamp(dot(viewDir, nn),              0, 1);   \n"
+        "    float spec = clamp(dot(reflect(viewDir, nn), lDir), 0, 1);   \n"
+        "    fragColor = vec3(pow(viewDot + lightDot, 10.));   \n"
         //"    fragColor = fragColor / (fragColor + vec3(1.0));   \n"
         //"    fragColor = vec3(1) - pow(vec3(1) - fragColor, vec3(4));   \n"
         "}\n";

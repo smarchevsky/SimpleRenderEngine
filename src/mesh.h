@@ -3,17 +3,17 @@
 #include "mesh_attributes.h"
 
 #include <cstdint> // uintXX_t
+#include <glm/glm.hpp>
 #include <vector>
 
 class MeshData;
-
-
 
 class GL_Mesh { // max 21845 vert (65536/3) vertices;
 public:
     GL_Mesh(const MeshData& data,
         VertexAttribData attributes,
         IndexAttribData indexAttribute);
+    void setInstanceData(const std::vector<glm::mat4>& matrices);
     void draw();
 
 private:

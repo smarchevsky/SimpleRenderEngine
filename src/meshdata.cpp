@@ -15,6 +15,8 @@ static void vertArraytoPlainI32Array(const TriArray& from, IndexArray& to)
         ((TriIndex*)to.data())[i] = from[i];
 }
 
+//////////// PRIMITIVES /////////////
+
 static void createPlaneZ(VertArray& a_vertices, VertArray& a_normals, IndexArray& a_indices)
 {
     a_vertices = { { -1, -1, 0 }, { 1, -1, 0 }, { -1, 1, 0 }, { 1, 1, 0 } };
@@ -43,6 +45,8 @@ static void createCylindricalNormalCube(VertArray& a_vertices, VertArray& a_norm
     a_normals = std::move(normals);
     vertArraytoPlainI32Array(triangles, a_indices);
 }
+
+/////////////////////////////////////////////
 
 MeshData::MeshData(ParametricType type)
 {
