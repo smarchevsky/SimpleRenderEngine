@@ -31,7 +31,7 @@ static void createCylindricalNormalCube(VertArray& a_vertices, VertArray& a_norm
     std::vector<glm::vec3> normals = vertices;
     for (int i = 0; i < vertices.size(); ++i) {
         auto& v = vertices[i];
-        normals[i] = glm::normalize(glm::vec3(v.x, v.y, v.z * 1.01f));
+        normals[i] = glm::normalize(glm::vec3(v.x, v.y, v.z * 0.01f));
     }
 
     std::vector<glm::uvec3> triangles;

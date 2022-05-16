@@ -18,7 +18,7 @@ void Shader::ShaderVariable::set(const glm::vec3& var) { glUniform3fv(location, 
 void Shader::ShaderVariable::set(const glm::vec4& var) { glUniform4fv(location, 1, &var[0]); }
 void Shader::ShaderVariable::set(const glm::mat4& var) { glUniformMatrix4fv(location, 1, GL_FALSE, &var[0][0]); }
 
-static const std::string s_version = "#version 330 core\n";
+static const std::string s_version = "#version 460 core\n";
 
 static const std::string s_vsInOut
     = "VS_OUT {   \n"
@@ -33,6 +33,7 @@ static std::unordered_map<VertexAttribute::Type, std::string> s_attribNames = {
 };
 
 // kinda: layout (location = 0) in vec3 vertexPosition;
+static std::string s_vecName = "vec";
 static std::string generateVertexAtrtributes(const VertexAttribData& vertData)
 {
     std::string result;
@@ -40,11 +41,13 @@ static std::string generateVertexAtrtributes(const VertexAttribData& vertData)
         const auto& currentAttrib = vertData.attributes[i_attrib];
 
         auto it = s_attribNames.find(currentAttrib.vertAttribType);
-        if (it != s_attribNames.end()) {
-            const std::string& currentAttribName = it->second;
-            result += "layout (location = " + std::to_string(i_attrib) + ") in vec3 " + currentAttribName + ";\n";
-        } else
+        if (it == s_attribNames.end())
             assert(false); // unsupported name
+
+        const std::string& currentAttribName = it->second;
+        result += "layout (location = " + std::to_string(i_attrib) + ") in "
+            + s_vecName + std::to_string(currentAttrib.parameters.vectorSize) + " "
+            + currentAttribName + ";\n";
     }
     return result;
 }
@@ -67,11 +70,11 @@ static std::string getVertexCode(const VertexAttribData& vertData)
 
         "void main()"
         "{\n"
-        "    vs.lp = vec4(vertexPosition, 1.0f); \n"
-        "    vs.wp = model * vs.lp;              \n"
-        "    vec4 cp = view * vs.wp;             \n"
-        "    gl_Position  =  projection * cp;    \n"
-        "    vs.n = mat3(model) * vertexNormal;  \n"
+        "    vs.lp = vec4(vertexPosition.xyz, 1.0f); \n"
+        "    vs.wp = model * vs.lp;                  \n"
+        "    vec4 cp = view * vs.wp;                 \n"
+        "    gl_Position  =  projection * cp;        \n"
+        "    vs.n = mat3(model) * vertexNormal.xyz;  \n"
         "}\0";
 }
 
@@ -100,11 +103,11 @@ static std::string getFragmentCode()
         "    vec3 lDir = lightDir.rgb;   \n"
 
         "    float lightDot = clamp(dot(lDir, nn), 0, 1);   \n"
-        "    float viewDot = abs(dot(viewDir, nn));   \n"
-        "    float spec = -dot(reflect(viewDir, nn), lDir);   \n"
-        "    fragColor = vec3(lightDot);   \n"
-        "    fragColor = fragColor / (fragColor + vec3(1.0));   \n"
-        "    fragColor = vec3(1) - pow(vec3(1) - fragColor, vec3(4));   \n"
+        "    float viewDot = clamp(dot(viewDir, nn), 0, 1);   \n"
+        "    float spec = dot(reflect(viewDir, nn), lDir);   \n"
+        "    fragColor = vec3(pow(spec, 4.));   \n"
+        //"    fragColor = fragColor / (fragColor + vec3(1.0));   \n"
+        //"    fragColor = vec3(1) - pow(vec3(1) - fragColor, vec3(4));   \n"
         "}\n";
 }
 

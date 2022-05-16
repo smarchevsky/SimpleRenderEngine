@@ -1,5 +1,5 @@
-#ifndef VERTEX_ATTRIBUTES_H
-#define VERTEX_ATTRIBUTES_H
+#ifndef MESH_ATTRIBUTES_H
+#define MESH_ATTRIBUTES_H
 
 #include <cstdint> // uintXX_t
 #include <vector>
@@ -44,4 +44,9 @@ struct IndexAttribData {
     }
     const Format format;
 };
-#endif // VERTEX_ATTRIBUTES_H
+
+struct InstanceAttribData{
+      enum class Format : uint8_t { mat4x4 }; // clang-format on
+};
+
+#endif // MESH_ATTRIBUTES_H

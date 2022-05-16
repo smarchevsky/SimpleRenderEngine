@@ -170,7 +170,7 @@ GL_Mesh::GL_Mesh(const MeshData& meshData, VertexAttribData vertAttribData, Inde
 
     if ((indexAttribData.format == IndexAttribData::Format::u8 && numVertices > 255)
         || (indexAttribData.format == IndexAttribData::Format::u16 && numVertices > 65535)) {
-        assert(false); // too many vertices for byte format
+        assert(false); // too many vertices for this type format
     }
 
     const ByteArray indexByteArray = makePlainIndexByteArray(

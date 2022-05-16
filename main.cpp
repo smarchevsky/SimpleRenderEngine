@@ -38,6 +38,7 @@ int main()
     auto shaderModel = shader.getVariable("model");
     auto shaderView = shader.getVariable("view");
     auto shaderProjection = shader.getVariable("projection");
+    auto shaderViewPos = shader.getVariable("viewPos");
 
     Camera camera;
     glm::mat4 modelMatrix(1); // unit matrix
@@ -53,6 +54,7 @@ int main()
         shaderModel.set(modelMatrix);
         shaderView.set(camera.getView());
         shaderProjection.set(camera.getProjection());
+        shaderViewPos.set(camera.getPos());
 
         mesh.draw();
     }
