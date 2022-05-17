@@ -4,28 +4,34 @@
 #include <cstdint> // uintXX_t
 #include <vector>
 
+// clang-format off
+enum class MeshAttribFormat : uint8_t {
+    Invalid,
+    Float1, Float2, Float3, Float4, // don't change order!
+     Half1,  Half2,  Half3,  Half4,
+     Uint8, Uint16, Uint32
+}; // clang-format on
+
+struct MeshAttribParameters {
+    MeshAttribParameters(MeshAttribFormat format);
+    const MeshAttribFormat format {};
+    const char* shaderName {};
+    int openGLTypeFormat {};
+    uint32_t sizeInBytes {};
+    uint8_t vectorSize {};
+    bool normalized {};
+    bool isFloat();
+    bool isHalf();
+};
+
 struct VertexAttribute {
     // clang-format off
-    enum class Format : uint8_t {
-        f1 = 0, f2, f3, f4, // float
-        h1 = 4, h2, h3, h4, // half
-    }; // Dont change order and number. f3 and h4 are supported
-
     enum class Type : uint8_t { Position, Normal, Tan, BiTan, Color };
     // clang-format on
 
-    struct Parameters {
-        int openGLTypeFormat;
-        uint16_t sizeInBytes;
-        uint8_t vectorSize;
-        bool normalized {};
-    };
-
-    VertexAttribute(Type type, Format format);
-
-    const Parameters parameters;
-    const Format vertAttribFormat;
-    const Type vertAttribType;
+    VertexAttribute(Type type, MeshAttribFormat format);
+    const MeshAttribParameters parameters;
+    const Type type;
 };
 
 struct VertexAttribData {
@@ -36,17 +42,12 @@ struct VertexAttribData {
 };
 
 struct IndexAttribData {
-    // clang-format off
-    enum class Format : uint8_t { u8, u16, u32 }; // clang-format on
-    IndexAttribData(Format format)
-        : format(format)
-    {
-    }
-    const Format format;
+    IndexAttribData(MeshAttribFormat format);
+    const MeshAttribParameters parameters;
 };
 
-struct InstanceAttribData{
-      enum class Format : uint8_t { mat4x4 }; // clang-format on
+struct InstanceAttribData {
+    const MeshAttribParameters parameters;
 };
 
 #endif // MESH_ATTRIBUTES_H

@@ -33,18 +33,20 @@ static std::unordered_map<VertexAttribute::Type, std::string> s_attribNames = {
 };
 
 // kinda: layout (location = 0) in vec3 vertexPosition;
-static std::string s_vecName = "vec";
+static std::string s_vecName = "vec"; // later: float, vec, mat
 static std::string generateVertexAtrtributes(const VertexAttribData& vertData)
 {
     std::string result;
+
     for (int i_attrib = 0; i_attrib < vertData.attributes.size(); ++i_attrib) {
         const auto& currentAttrib = vertData.attributes[i_attrib];
 
-        auto it = s_attribNames.find(currentAttrib.vertAttribType);
+        auto it = s_attribNames.find(currentAttrib.type);
         if (it == s_attribNames.end())
             assert(false); // unsupported name
 
         const std::string& currentAttribName = it->second;
+
         result += "layout (location = " + std::to_string(i_attrib) + ") in "
             + s_vecName + std::to_string(currentAttrib.parameters.vectorSize) + " "
             + currentAttribName + ";\n";
@@ -61,9 +63,10 @@ static std::string commonUniformBlock()
 
 static std::string getVertexCode(const VertexAttribData& vertData)
 {
-    return s_version
+    std::string result;
+    result = s_version
         + generateVertexAtrtributes(vertData)
-        + "layout (location = 3) in mat4 instanceMatrix;"
+        + "layout (location = 3) in mat4 instanceMatrix;\n"
 
         + commonUniformBlock()
 
@@ -72,11 +75,13 @@ static std::string getVertexCode(const VertexAttribData& vertData)
         "void main()"
         "{\n"
         "    vs.lp = vec4(vertexPosition.xyz, 1.0f); \n"
-        "    vs.wp = model * instanceMatrix * vs.lp;                  \n"
-        "    vec4 cp = view * vs.wp;                 \n"
-        "    gl_Position  =  projection * cp;        \n"
-        "    vs.n = mat3(model) * vertexNormal.xyz;  \n"
+        "    vs.wp = model * instanceMatrix * vs.lp;  \n"
+        "    vec4 cp = view * vs.wp;                  \n"
+        "    gl_Position  =  projection * cp;         \n"
+        "    vs.n = mat3(model) * vertexNormal.xyz;   \n"
         "}\0";
+    // std::cout << result << std::endl;
+    return result;
 }
 
 static std::string getFragmentCode()

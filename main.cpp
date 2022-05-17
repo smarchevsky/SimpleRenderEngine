@@ -29,18 +29,18 @@ int main()
     std::vector<glm::mat4> matrices;
     for (int i = 0; i < 100.f; ++i) {
         glm::mat4 mat(1);
-        mat = glm::translate(mat, glm::ballRand(10.f));
-        mat = glm::rotate(mat, glm::linearRand(0.f, (float)(2 * M_PI)), glm::sphericalRand(1.f));
+        mat = glm::translate(mat, glm::ballRand(1.f));
+        mat = glm::rotate(mat, glm::linearRand<float>(0, 2 * M_PI), glm::sphericalRand(1.f));
         mat = glm::scale(mat, { 0.05f, 0.05f, 5.0f });
         matrices.push_back(mat);
     }
 
     MeshData mData(MeshData::ParametricType::CylindricalNormalCube);
     VertexAttribData attrib(
-        { { VertexAttribute::Type::Position, VertexAttribute::Format::f3 },
-            { VertexAttribute::Type::Normal, VertexAttribute::Format::h4 } });
+        { { VertexAttribute::Type::Position, MeshAttribFormat::Float3 },
+            { VertexAttribute::Type::Normal, MeshAttribFormat::Half4 } });
 
-    GL_Mesh mesh(mData, attrib, IndexAttribData::Format::u16);
+    GL_Mesh mesh(mData, attrib, MeshAttribFormat::Uint16);
     mesh.setInstanceData(matrices);
 
     Shader shader(attrib);
