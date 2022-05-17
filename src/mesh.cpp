@@ -124,8 +124,8 @@ static ByteArray makePlainIndexByteArray(const VertIndex* vertIndices, size_t in
     return byteArray;
 }
 
-GL_Mesh::GL_Mesh(const MeshData& meshData, VertexAttribData vertAttribData, IndexAttribData indexAttribData)
-    : m_GL_IndexFormatType(indexAttribData.parameters.openGLTypeFormat)
+GL_Mesh::GL_Mesh(const MeshData& meshData, VertexAttribData vertAttribData, IndexAttribData indexAttributes)
+    : m_GL_IndexFormatType(indexAttributes.parameters.openGLTypeFormat)
 {
     m_meshElementArraySize = meshData.getNumIndices();
     glGenVertexArrays(1, &m_VAO);
@@ -137,13 +137,13 @@ GL_Mesh::GL_Mesh(const MeshData& meshData, VertexAttribData vertAttribData, Inde
     const ByteArray vertexByteArray = makePlainVertexByteArray(
         meshData.getPositionsPtr(), meshData.getNormalsPtr(), numVertices, vertAttribData);
 
-    if ((indexAttribData.parameters.format == MeshAttribFormat::Uint8 && numVertices > 255)
-        || (indexAttribData.parameters.format == MeshAttribFormat::Uint16 && numVertices > 65535)) {
+    if ((indexAttributes.parameters.format == MeshAttribFormat::Uint8 && numVertices > 255)
+        || (indexAttributes.parameters.format == MeshAttribFormat::Uint16 && numVertices > 65535)) {
         assert(false); // too many vertices for this type format
     }
 
     const ByteArray indexByteArray = makePlainIndexByteArray(
-        meshData.getIndicesPtr(), meshData.getNumIndices(), indexAttribData);
+        meshData.getIndicesPtr(), meshData.getNumIndices(), indexAttributes);
 
     glBindBuffer(GL_ARRAY_BUFFER, m_VBO);
     glBufferData(GL_ARRAY_BUFFER, vertexByteArray.size(), vertexByteArray.data(), GL_STATIC_DRAW);
@@ -157,12 +157,29 @@ GL_Mesh::GL_Mesh(const MeshData& meshData, VertexAttribData vertAttribData, Inde
     glBindVertexArray(0);
 }
 
-void GL_Mesh::setInstanceData(const std::vector<glm::mat4>& matrices)
+GL_Mesh::~GL_Mesh()
 {
-    unsigned int buffer;
-    glGenBuffers(1, &buffer);
-    glBindBuffer(GL_ARRAY_BUFFER, buffer);
-    glBufferData(GL_ARRAY_BUFFER, matrices.size() * sizeof(glm::mat4), matrices.data(), GL_STATIC_DRAW);
+    if (m_VAO) {
+        glDeleteBuffers(1, &m_VBO);
+        glDeleteBuffers(1, &m_EBO);
+        glDeleteVertexArrays(1, &m_VAO);
+        m_VAO = 0;
+    }
+}
+
+void GL_Mesh::draw()
+{
+    if (m_VAO != s_currentlyBindedVAO)
+        glBindVertexArray(m_VAO);
+    glDrawElements(GL_TRIANGLES, m_meshElementArraySize, m_GL_IndexFormatType, 0);
+}
+
+GL_InstancedMesh::GL_InstancedMesh(const MeshData& data, VertexAttribData vertexAttributes, IndexAttribData indexAttributes, InstanceAttribData instanceAttributes)
+    : GL_Mesh(data, vertexAttributes, indexAttributes)
+    , m_instanceAttribData(instanceAttributes)
+{
+    glGenBuffers(1, &m_IBO);
+    glBindBuffer(GL_ARRAY_BUFFER, m_IBO);
 
     glBindVertexArray(m_VAO);
     size_t vec4Size = sizeof(glm::vec4);
@@ -179,17 +196,32 @@ void GL_Mesh::setInstanceData(const std::vector<glm::mat4>& matrices)
     glVertexAttribDivisor(4, 1);
     glVertexAttribDivisor(5, 1);
     glVertexAttribDivisor(6, 1);
+}
+
+GL_InstancedMesh::~GL_InstancedMesh()
+{
+    if (m_IBO)
+        glDeleteBuffers(1, &m_IBO);
+}
+
+void GL_InstancedMesh::setInstanceTransforms(const std::vector<glm::mat4>& matrices)
+{
+    glBindBuffer(GL_ARRAY_BUFFER, m_IBO);
+    if (m_instanceArraySize != matrices.size()) {
+        m_instanceArraySize = matrices.size();
+        glBufferData(GL_ARRAY_BUFFER, m_instanceArraySize * sizeof(glm::mat4), matrices.data(), GL_STATIC_DRAW);
+    } else {
+        glBufferSubData(GL_ARRAY_BUFFER, 0, m_instanceArraySize * sizeof(glm::mat4), matrices.data());
+    }
 
     glBindVertexArray(0);
 }
 
-void GL_Mesh::draw()
+void GL_InstancedMesh::draw()
 {
     if (m_VAO != s_currentlyBindedVAO)
         glBindVertexArray(m_VAO);
-    // glDrawArrays(GL_TRIANGLES, 0, 6);
-    // glDrawElements(GL_TRIANGLES, m_meshElementArraySize, m_GL_IndexFormatType, 0);
-    glDrawElementsInstanced(GL_TRIANGLES, m_meshElementArraySize, m_GL_IndexFormatType, 0, 100);
+    glDrawElementsInstanced(GL_TRIANGLES, m_meshElementArraySize, m_GL_IndexFormatType, 0, m_instanceArraySize);
 }
 
 static_assert(std::is_same<uint32_t, VertIndex>(), "");

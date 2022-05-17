@@ -5,43 +5,55 @@
 
 #include <cassert>
 
-bool MeshAttribParameters::isFloat() { return format >= MeshAttribFormat::Float1 && format <= MeshAttribFormat::Float4; }
-bool MeshAttribParameters::isHalf() { return format >= MeshAttribFormat::Half1 && format <= MeshAttribFormat::Half4; }
+bool MeshAttribParameters::isFloatVector()
+{
+    return (format >= MeshAttribFormat::Float1 && format <= MeshAttribFormat::Float4);
+}
+bool MeshAttribParameters::isHalfVector() { return format >= MeshAttribFormat::Half1 && format <= MeshAttribFormat::Half4; }
 
 static MeshAttribParameters calcMeshAttribParameters(MeshAttribFormat format)
 {
     MeshAttribParameters params(format);
 
     int dataSize = 0;
-    params.vectorSize = 1;
-    if (params.isFloat()) {
-        dataSize = sizeof(float);
+    params.vectorSize = 0;
+    if (params.isFloatVector()) {
         params.openGLTypeFormat = GL_FLOAT;
+        dataSize = sizeof(float);
         params.vectorSize = (int)format - (int)MeshAttribFormat::Float1 + 1;
 
-    } else if (params.isHalf()) {
-        dataSize = sizeof(float) / 2;
+    } else if (params.isHalfVector()) {
         params.openGLTypeFormat = GL_HALF_FLOAT;
+        dataSize = sizeof(float) / 2;
         params.vectorSize = (int)format - (int)MeshAttribFormat::Half1 + 1;
 
     } else if (format == MeshAttribFormat::Uint8) {
-        dataSize = sizeof(uint8_t);
         params.openGLTypeFormat = GL_UNSIGNED_BYTE;
+        dataSize = sizeof(uint8_t);
+        params.vectorSize = 1;
 
     } else if (format == MeshAttribFormat::Uint16) {
-        dataSize = sizeof(uint16_t);
         params.openGLTypeFormat = GL_UNSIGNED_SHORT;
+        dataSize = sizeof(uint16_t);
+        params.vectorSize = 1;
 
     } else if (format == MeshAttribFormat::Uint32) {
-        dataSize = sizeof(uint32_t);
         params.openGLTypeFormat = GL_UNSIGNED_INT;
+        dataSize = sizeof(uint32_t);
+        params.vectorSize = 1;
+
+    } else if (format == MeshAttribFormat::Mat4x4) {
+        params.openGLTypeFormat = GL_FLOAT;
+        dataSize = sizeof(float);
+        params.vectorSize = 16;
     }
+
     params.sizeInBytes = dataSize * params.vectorSize;
 
-    assert(params.format != MeshAttribFormat::Invalid
-        && params.openGLTypeFormat != 0
-        && params.vectorSize != 0
-        && params.sizeInBytes != 0); // invalid mesh data, shame on you!
+    assert(params.format != MeshAttribFormat::Invalid);
+    assert(params.openGLTypeFormat != 0);
+    assert(params.vectorSize != 0);
+    assert(params.sizeInBytes != 0); // invalid mesh data, shame on you!
 
     return params;
 }
@@ -82,6 +94,11 @@ VertexAttribData::VertexAttribData(std::initializer_list<VertexAttribute> attrib
 }
 
 IndexAttribData::IndexAttribData(MeshAttribFormat format)
+    : parameters(calcMeshAttribParameters(format))
+{
+}
+
+InstanceAttribData::InstanceAttribData(MeshAttribFormat format)
     : parameters(calcMeshAttribParameters(format))
 {
 }

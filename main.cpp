@@ -18,6 +18,19 @@ glm::vec3 rainbow(float x)
     return result * result;
 }
 
+std::vector<glm::mat4> getMatrices()
+{
+    std::vector<glm::mat4> matrices;
+    for (int i = 0; i < 100.f; ++i) {
+        glm::mat4 mat(1);
+        mat = glm::translate(mat, glm::ballRand(3.f));
+        mat = glm::rotate(mat, glm::linearRand<float>(0, 2 * M_PI), glm::sphericalRand(1.f));
+        mat = glm::scale(mat, { 0.05f, 0.05f, 5.0f });
+        matrices.push_back(mat);
+    }
+    return matrices;
+}
+
 int main()
 {
     Window window(1000, 1000);
@@ -26,22 +39,17 @@ int main()
         window.closeWindow();
     });
 
-    std::vector<glm::mat4> matrices;
-    for (int i = 0; i < 100.f; ++i) {
-        glm::mat4 mat(1);
-        mat = glm::translate(mat, glm::ballRand(1.f));
-        mat = glm::rotate(mat, glm::linearRand<float>(0, 2 * M_PI), glm::sphericalRand(1.f));
-        mat = glm::scale(mat, { 0.05f, 0.05f, 5.0f });
-        matrices.push_back(mat);
-    }
-
     MeshData mData(MeshData::ParametricType::CylindricalNormalCube);
     VertexAttribData attrib(
         { { VertexAttribute::Type::Position, MeshAttribFormat::Float3 },
             { VertexAttribute::Type::Normal, MeshAttribFormat::Half4 } });
 
-    GL_Mesh mesh(mData, attrib, MeshAttribFormat::Uint16);
-    mesh.setInstanceData(matrices);
+    GL_InstancedMesh mesh(mData, attrib, MeshAttribFormat::Uint16, MeshAttribFormat::Mat4x4);
+    mesh.setInstanceTransforms(getMatrices());
+
+    window.getKeyMap().bindAction(SDLK_g, KMOD_NONE, true, [&]() {
+        mesh.setInstanceTransforms(getMatrices());
+    });
 
     Shader shader(attrib);
 

@@ -11,15 +11,33 @@ class MeshData;
 class GL_Mesh { // max 21845 vert (65536/3) vertices;
 public:
     GL_Mesh(const MeshData& data,
-        VertexAttribData attributes,
-        IndexAttribData indexAttribute);
-    void setInstanceData(const std::vector<glm::mat4>& matrices);
-    void draw();
+        VertexAttribData vertexAttributes,
+        IndexAttribData indexAttributes);
+    virtual ~GL_Mesh();
 
-private:
+    virtual void draw();
+
+protected:
     static uint32_t s_currentlyBindedVAO;
-    uint32_t m_VBO {}, m_EBO {}, m_VAO {}, m_meshElementArraySize {};
     const int m_GL_IndexFormatType;
+    uint32_t m_VBO {}, m_EBO {}, m_VAO {};
+    uint32_t m_meshElementArraySize {}; // num of indices
 };
 
+class GL_InstancedMesh : public GL_Mesh {
+public:
+    GL_InstancedMesh(const MeshData& data,
+        VertexAttribData vertexAttributes,
+        IndexAttribData indexAttributes,
+        InstanceAttribData instanceAttributes);
+    virtual ~GL_InstancedMesh();
+
+    void setInstanceTransforms(const std::vector<glm::mat4>& matrices);
+    virtual void draw();
+
+    uint32_t m_IBO {}; // instance buffer object
+    uint32_t m_instanceArraySize {}; // num of instances
+
+    const InstanceAttribData m_instanceAttribData;
+};
 #endif // MESH_H

@@ -6,13 +6,15 @@
 
 // clang-format off
 enum class MeshAttribFormat : uint8_t {
-    Invalid,
+   Invalid,
     Float1, Float2, Float3, Float4, // don't change order!
      Half1,  Half2,  Half3,  Half4,
-     Uint8, Uint16, Uint32
+    Mat4x4,
+    Uint8, Uint16, Uint32,
 }; // clang-format on
 
 struct MeshAttribParameters {
+    // MeshAttribParameters(const MeshAttribParameters& other) = default;
     MeshAttribParameters(MeshAttribFormat format);
     const MeshAttribFormat format {};
     const char* shaderName {};
@@ -20,8 +22,8 @@ struct MeshAttribParameters {
     uint32_t sizeInBytes {};
     uint8_t vectorSize {};
     bool normalized {};
-    bool isFloat();
-    bool isHalf();
+    bool isFloatVector();
+    bool isHalfVector();
 };
 
 struct VertexAttribute {
@@ -47,6 +49,7 @@ struct IndexAttribData {
 };
 
 struct InstanceAttribData {
+    InstanceAttribData(MeshAttribFormat format);
     const MeshAttribParameters parameters;
 };
 
