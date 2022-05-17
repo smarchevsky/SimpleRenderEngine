@@ -22,7 +22,7 @@ static int SDLCALL my_event_filter(void* userdata, SDL_Event* event)
         p_window->closeWindow();
         return 1;
     }
-    if (event->type == SDL_KEYDOWN || event->type == SDL_KEYUP) {
+    if ((event->type == SDL_KEYDOWN || event->type == SDL_KEYUP) && !event->key.repeat) {
         const auto& it = p_window->getKeyMap().find((SDL_KeyCode)event->key.keysym.sym,
             (SDL_Keymod)event->key.keysym.mod, event->type == SDL_KEYDOWN);
 
