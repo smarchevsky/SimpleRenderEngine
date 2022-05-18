@@ -51,6 +51,10 @@ int main()
         mesh.setInstanceTransforms(getMatrices());
     });
 
+    window.getKeyMap().bindAction(SDLK_F11, KMOD_NONE, true, [&]() {
+        window.setWindowFullScreen(!window.getWindowFullScreen());
+    });
+
     Shader shader(attrib);
 
     auto shaderModel = shader.getVariable("model");

@@ -23,6 +23,8 @@ public:
     // glm::vec2 getMousePos();
 
     void closeWindow() { m_isRendering = false; }
+    void setWindowFullScreen(bool fullscreen);
+    bool getWindowFullScreen();
     KeyMap& getKeyMap() { return m_keyMap; }
     ~Window();
 

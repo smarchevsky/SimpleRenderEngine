@@ -11,88 +11,36 @@
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/string_cast.hpp>
 
-//#define LOG_GAME_CONTROLLERS
-
-static int SDLCALL my_event_filter(void* userdata, SDL_Event* event)
+static int eventWatcher(void* userdata, SDL_Event* event)
 {
     Window* p_window = (Window*)userdata;
-
     switch (event->type) {
-    case SDL_QUIT: // press exit btn
+    case SDL_QUIT: {
         p_window->closeWindow();
-        return 1;
-    }
-    if ((event->type == SDL_KEYDOWN || event->type == SDL_KEYUP) && !event->key.repeat) {
-        const auto& it = p_window->getKeyMap().find((SDL_KeyCode)event->key.keysym.sym,
-            (SDL_Keymod)event->key.keysym.mod, event->type == SDL_KEYDOWN);
+    } break;
+    case SDL_KEYDOWN:
+    case SDL_KEYUP: {
+        if (!event->key.repeat) {
+            const auto& it = p_window->getKeyMap().find((SDL_KeyCode)event->key.keysym.sym,
+                (SDL_Keymod)event->key.keysym.mod, event->type == SDL_KEYDOWN);
 
-        if (it != p_window->getKeyMap().getKeyActions().end()) {
-            it->second();
-            return 1;
+            if (it != p_window->getKeyMap().getKeyActions().end()) {
+                it->second();
+            }
+        }
+    } break;
+    case SDL_WINDOWEVENT: {
+        if (event->window.event == SDL_WINDOWEVENT_RESIZED) {
+            SDL_Window* win = SDL_GetWindowFromID(event->window.windowID);
+            int x {}, y {};
+            SDL_GetWindowSize(win, &x, &y);
+            glViewport(0, 0, x, y);
         }
     }
-
-    if (event->type == SDL_JOYAXISMOTION) {
-        SDL_Joystick* joystick = SDL_JoystickFromInstanceID(event->jaxis.which);
-        auto it = p_window->m_joysticks.find(joystick);
-        if (it != p_window->m_joysticks.end()) {
-
-            GameControllerData& data = it->second; // TODO redo using gamepad mapping
-            bool evaluated = true;
-            switch (event->jaxis.axis) {
-            case 0: // left
-                data.slx_value = event->jaxis.value;
-                break;
-            case 1:
-                data.sly_value = event->jaxis.value;
-                break;
-            case 2:
-                data.tl_value = event->jaxis.value;
-                break;
-            case 3: // right
-                data.srx_value = event->jaxis.value;
-                break;
-            case 4:
-                data.sry_value = event->jaxis.value;
-                break;
-            case 5:
-                data.tr_value = event->jaxis.value;
-                break;
-            case 6:
-                // left and right triggers connected, do nothing
-                break;
-
-            default:
-                evaluated = false;
-            }
-            evaluated = evaluated; // fuck never read warning
-#ifdef LOG_GAME_CONTROLLERS
-            std::cout << "Controller: " << SDL_JoystickName(joystick);
-            if (evaluated)
-                std::cout
-                    << "  Axis: " << (int)event->jaxis.axis
-                    << "  StickLeft: " << glm::to_string(glm::ivec2(data.slx_value, data.sly_value))
-                    << "  StickRight: " << glm::to_string(glm::ivec2(data.srx_value, data.sry_value))
-                    << "  TriggerLeft: " << data.tl_value
-                    << "  TriggerRight: " << data.tr_value
-                    << std::endl;
-            else {
-                std::cout
-                    << "\t Undefined axis: " << (int)event->jaxis.axis
-                    << "\t Value: " << event->jaxis.value
-                    << std::endl;
-            }
-#endif
-        } else {
-            std::cout << "This joystick not listed before..." << std::endl;
-        }
+    case SDL_POLLSENTINEL: {
     }
-
-    if (event->type != SDL_POLLSENTINEL) {
-        // std::cout << "EventType: " << (int)event->type << "Axis: " << (int)event->caxis.axis << std::endl;
-        // std::cout << event->type << std::endl;
     }
-    return 0;
+    return 1;
 }
 
 Window::Window(int width /*= 800*/, int height /*= 600*/)
@@ -105,7 +53,7 @@ Window::Window(int width /*= 800*/, int height /*= 600*/)
     }
 
     m_window = SDL_CreateWindow("Glad Sample", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
-        m_width, m_height, SDL_WINDOW_SHOWN | SDL_WINDOW_OPENGL);
+        m_width, m_height, SDL_WINDOW_SHOWN | SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE);
 
     gl_context = SDL_GL_CreateContext(m_window);
 
@@ -122,7 +70,8 @@ Window::Window(int width /*= 800*/, int height /*= 600*/)
 
     initGamepad();
     SDL_GL_MakeCurrent(m_window, gl_context);
-    SDL_SetEventFilter(my_event_filter, this);
+
+    SDL_AddEventWatch(eventWatcher, this);
 
     NOW = LAST = SDL_GetPerformanceCounter();
 
@@ -190,6 +139,16 @@ bool Window::update()
     SDL_GL_SwapWindow(m_window);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     return m_isRendering;
+}
+
+void Window::setWindowFullScreen(bool fullscreen)
+{
+    SDL_SetWindowFullscreen(m_window, fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0);
+}
+
+bool Window::getWindowFullScreen()
+{
+    return SDL_GetWindowFlags(m_window) & SDL_WINDOW_FULLSCREEN_DESKTOP;
 }
 
 Window::~Window()
