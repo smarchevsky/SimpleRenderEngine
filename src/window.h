@@ -31,6 +31,9 @@ public:
     void ErrorMsg(const char* title, const char* msg);
     std::unordered_map<_SDL_Joystick*, GameControllerData> m_joysticks;
 
+    bool isLMBDown {}, isMMBDown {}, isRMBDown {};
+    std::function<void(int32_t, int32_t)> LMBDragEvent {}, MMBDragEvent {}, RMBDragEvent {};
+
 private:
     KeyMap m_keyMap;
     struct SDL_Window* m_window;

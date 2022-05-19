@@ -20,7 +20,7 @@ static int eventWatcher(void* userdata, SDL_Event* event)
     } break;
     case SDL_KEYDOWN:
     case SDL_KEYUP: {
-        if (!event->key.repeat) {
+        if (true || !event->key.repeat) {
             const auto& it = p_window->getKeyMap().find((SDL_KeyCode)event->key.keysym.sym,
                 (SDL_Keymod)event->key.keysym.mod, event->type == SDL_KEYDOWN);
 
@@ -28,6 +28,45 @@ static int eventWatcher(void* userdata, SDL_Event* event)
                 it->second();
             }
         }
+    } break;
+
+    case SDL_MOUSEBUTTONDOWN: {
+        switch (event->button.button) {
+        case 1: {
+            p_window->isLMBDown = true;
+        } break;
+        case 2: {
+            p_window->isMMBDown = true;
+        } break;
+        case 3: {
+            p_window->isRMBDown = true;
+        } break;
+        }
+    } break;
+
+    case SDL_MOUSEBUTTONUP: {
+        switch (event->button.button) {
+        case 1: {
+            p_window->isLMBDown = false;
+        } break;
+        case 2: {
+            p_window->isMMBDown = false;
+        } break;
+        case 3: {
+            p_window->isRMBDown = false;
+        } break;
+        }
+    } break;
+
+    case SDL_MOUSEMOTION: {
+        // event->button.state
+        if (p_window->isLMBDown && p_window->LMBDragEvent)
+            p_window->LMBDragEvent(event->motion.xrel, event->motion.yrel);
+        if (p_window->isMMBDown && p_window->MMBDragEvent)
+            p_window->MMBDragEvent(event->motion.xrel, event->motion.yrel);
+        if (p_window->isRMBDown && p_window->RMBDragEvent)
+            p_window->RMBDragEvent(event->motion.xrel, event->motion.yrel);
+
     } break;
     case SDL_WINDOWEVENT: {
         if (event->window.event == SDL_WINDOWEVENT_RESIZED) {
@@ -126,17 +165,16 @@ bool Window::update()
         m_secondFract = fmodf(m_secondFract, 1.f);
     }
 
-    SDL_Event event;
-    while (SDL_PollEvent(&event)) { // poll until all events are handled!
-        // decide what to do with this event.
-    }
-
     // if (SDL_GetMouseState(NULL, NULL) & SDL_BUTTON(SDL_BUTTON_RIGHT))
     //     SDL_Log("Mouse Button pressed.");
 
     LAST = NOW;
 
     SDL_GL_SwapWindow(m_window);
+    SDL_Event event;
+    while (SDL_PollEvent(&event)) { // poll until all events are handled!
+        // decide what to do with this event.
+    }
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     return m_isRendering;
 }
