@@ -37,6 +37,21 @@ void Camera::setUp(glm::vec3 up, bool b_updateView)
         updateViewMatrix();
 }
 
+float Camera::getDistance() const
+{
+    return glm::distance(m_pos, m_aim);
+}
+
+void Camera::setDistance(float newDistance, bool offsetAim, bool b_updateView)
+{
+    auto offset = m_pos - m_aim;
+    auto dir = offset / glm::length(offset);
+
+    m_pos = m_aim + dir * newDistance;
+    if (b_updateView)
+        updateViewMatrix();
+}
+
 void Camera::updateProjectionMatrix()
 {
     m_projection = glm::perspective(m_fov, m_ar, m_near, m_far);

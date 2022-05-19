@@ -24,6 +24,9 @@ public:
     glm::vec3 getUp() const { return m_up; }
     void setUp(glm::vec3 up, bool b_updateView = true);
 
+    float getDistance() const;
+    void setDistance(float newDistance, bool offsetAim = false, bool b_updateView = true);
+
     void updateProjectionMatrix();
     void updateViewMatrix();
 
@@ -33,7 +36,7 @@ public:
 private:
     glm::mat4 m_view;
     glm::mat4 m_projection;
-    glm::vec3 m_pos = { 0.f, -3.f, 0.f }, m_aim = { 0.f, 0.f, 0.f }, m_up = { 0.f, 0.f, 1.f };
+    glm::vec3 m_pos = { 0.f, -10.f, 3.f }, m_aim = { 0.f, 0.f, 0.f }, m_up = { 0.f, 0.f, 1.f };
     float m_near = .1f, m_far = 2000.f;
     float m_fov = 1.f /*radians*/, m_ar = 1.f;
 };
