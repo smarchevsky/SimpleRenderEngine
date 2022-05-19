@@ -84,6 +84,11 @@ static std::string getVertexCode(const VertexAttribData& vertData)
     return result;
 }
 
+static std::string s_fresnelShlickFunction = "float fresnelSchlick(float cosTheta, float f)"
+                                             "{"
+                                             "    return f + (1.0 - f) * pow(1.0 - cosTheta, 5.0);"
+                                             "}";
+
 static std::string getFragmentCode()
 {
     return s_version
@@ -91,24 +96,39 @@ static std::string getFragmentCode()
         + commonUniformBlock()
 
         + "uniform vec3 viewPos;   \n"
-          "uniform vec3 lightDir = vec3(0, 0, 1);   \n"
+          "uniform vec3 lightDir = vec3(0, 1, 1);   \n"
           "uniform vec3 diffuseColor;   \n"
 
         + "in " + s_vsInOut +
 
         "layout(location = 0) out vec3 fragColor;   \n"
 
+        + s_fresnelShlickFunction +
+
         "void main(){"
         "    vec3 nn = normalize(vs.n);   \n"
         "    vec3 viewDir = normalize(viewPos - vs.wp.xyz);   \n"
-        "    vec3 lDir = lightDir.rgb;   \n"
+        "    vec3 lDir = normalize(lightDir.rgb);   \n"
+        "    float lightDot = clamp(dot(lDir, nn), 0, 1);\n"
+        "    float viewDot = abs(dot(viewDir, nn));\n"
+        "    float spec = -dot(reflect(viewDir, nn), lDir);\n"
+        "    vec3 skyDir = vec3(0, 0, 1);\n"
 
-        "    float lightDot = clamp(dot(lDir, nn),                0, 1);   \n"
-        "    float viewDot = clamp(dot(viewDir, nn),              0, 1);   \n"
-        "    float spec = clamp(dot(reflect(viewDir, nn), lDir), 0, 1);   \n"
-        "    fragColor = vec3(pow(viewDot + lightDot, 10.));   \n"
-        //"    fragColor = fragColor / (fragColor + vec3(1.0));   \n"
-        //"    fragColor = vec3(1) - pow(vec3(1) - fragColor, vec3(4));   \n"
+        "    float skyReflection = dot(reflect(viewDir, nn), -skyDir);\n"
+        "    float skyDot = -dot(skyDir, nn);\n\n"
+
+        "    float fresnel = fresnelSchlick(viewDot, 0.04);\n"
+        "    float lightness =  /*shadow **/ lightDot;\n"
+
+        "    vec3 diffuse = lightness * diffuseColor;\n"
+        "    vec3 specular = 0.01 * lightness * vec3(1/(1-clamp(spec, 0,1))) * fresnel;\n"
+        "    float ambMultiplier = (1 - viewDot) * (1 - lightness) * 0 + pow(0.5 - skyDot * 0.5, 3);\n"
+        "    vec3 ambient = diffuseColor * (ambMultiplier * 0.1 + 0.1);\n"
+        "    vec3 skyColor = fract(clamp(1 - skyReflection, -0.5, 1.0)) * fresnel * vec3(0.7, 0.7, 1.0);\n"
+        "    fragColor = diffuse + specular + ambient + skyColor;\n"
+
+        "    fragColor = fragColor / (fragColor + vec3(1.0));\n"
+        "    fragColor = vec3(1) - pow(vec3(1) - fragColor, vec3(4));\n"
         "}\n";
 }
 
@@ -154,6 +174,7 @@ int Shader::createShader(const char* shaderSource, int shaderType)
         char infoLog[512];
         std::string shaderTypeName = shaderType == GL_VERTEX_SHADER ? "VERTEX" : "FRAGMENT";
         glGetShaderInfoLog(sh, 512, NULL, infoLog);
+        std::cout << shaderSource << std::endl;
         std::cout << "ERROR::SHADER::" << shaderTypeName << "::COMPILATION_FAILED\n"
                   << infoLog << std::endl;
     }
