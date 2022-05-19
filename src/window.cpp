@@ -31,31 +31,24 @@ static int eventWatcher(void* userdata, SDL_Event* event)
     } break;
 
     case SDL_MOUSEBUTTONDOWN: {
+        // clang-format off
         switch (event->button.button) {
-        case 1: {
-            p_window->isLMBDown = true;
-        } break;
-        case 2: {
-            p_window->isMMBDown = true;
-        } break;
-        case 3: {
-            p_window->isRMBDown = true;
-        } break;
+        case 1: { p_window->isLMBDown = true; } break;
+        case 2: { p_window->isMMBDown = true; } break;
+        case 3: { p_window->isRMBDown = true; } break;
         }
     } break;
-
     case SDL_MOUSEBUTTONUP: {
         switch (event->button.button) {
-        case 1: {
-            p_window->isLMBDown = false;
-        } break;
-        case 2: {
-            p_window->isMMBDown = false;
-        } break;
-        case 3: {
-            p_window->isRMBDown = false;
-        } break;
-        }
+        case 1: { p_window->isLMBDown = false; } break;
+        case 2: { p_window->isMMBDown = false; } break;
+        case 3: { p_window->isRMBDown = false; } break;
+        } // clang-format on
+    } break;
+    case SDL_MOUSEWHEEL: {
+        if (p_window->MouseScrollEvent)
+            p_window->MouseScrollEvent(event->wheel.preciseY);
+
     } break;
 
     case SDL_MOUSEMOTION: {
@@ -82,13 +75,17 @@ static int eventWatcher(void* userdata, SDL_Event* event)
     return 1;
 }
 
-Window::Window(int width /*= 800*/, int height /*= 600*/)
+Window::Window(int width /*= 800*/, int height /*= 600*/, uint8_t multiSampleLevel)
     : m_width(width)
     , m_height(height)
 {
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_GAMECONTROLLER) != 0) {
         std::cerr << "SDL2 video subsystem couldn't be initialized. Error: " << SDL_GetError() << std::endl;
         exit(1);
+    }
+    if (multiSampleLevel > 1) {
+        SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
+        SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, multiSampleLevel);
     }
 
     m_window = SDL_CreateWindow("Glad Sample", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
@@ -150,6 +147,10 @@ void Window::initGamepad()
     // std::cout << msg << std::endl;
     //  SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Controllers", msg.c_str(), nullptr);
 }
+void Window::clear()
+{
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+}
 
 bool Window::update()
 {
@@ -175,7 +176,7 @@ bool Window::update()
     while (SDL_PollEvent(&event)) { // poll until all events are handled!
         // decide what to do with this event.
     }
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
     return m_isRendering;
 }
 

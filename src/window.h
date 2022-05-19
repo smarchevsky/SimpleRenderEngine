@@ -14,10 +14,11 @@ struct GameControllerData {
 
 class Window {
 public:
-    Window(int width = 800, int height = 600);
+    Window(int width = 800, int height = 600, uint8_t multiSampleLevel = 1);
     void initGamepad();
 
     bool update();
+    void clear();
 
     float getDeltaTime() { return m_deltaTime; }
     // glm::vec2 getMousePos();
@@ -33,6 +34,7 @@ public:
 
     bool isLMBDown {}, isMMBDown {}, isRMBDown {};
     std::function<void(int32_t, int32_t)> LMBDragEvent {}, MMBDragEvent {}, RMBDragEvent {};
+    std::function<void(int32_t)> MouseScrollEvent {};
 
 private:
     KeyMap m_keyMap;
