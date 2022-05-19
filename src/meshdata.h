@@ -15,10 +15,11 @@ typedef std::vector<VertIndex> IndexArray;
 struct MeshData {
     enum class ParametricType {
         PlaneZ,
-        CylindricalNormalCube
+        CylindricalNormalCube,
+        Sphere
     };
 
-    MeshData(ParametricType type);
+    MeshData(ParametricType type, uint8_t resolution = 1);
 
     uint32_t getNumVertices() const
     {
